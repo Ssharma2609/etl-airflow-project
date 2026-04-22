@@ -1,13 +1,12 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
-import pandas as pd
 import logging
 
-# ✅ Import modular functions
-from extract import extract_data
-from transform import transform_data
-from load import load_data
+# ✅ Import functions (NO dags. prefix)
+from etl.extract import extract_data
+from etl.transform import transform_data
+from etl.load import load_data
 
 
 # 🔴 Failure callback
@@ -15,62 +14,41 @@ def on_failure_callback(context):
     logging.error(f"Task failed: {context['task_instance_key_str']}")
 
 
-# 🟢 Extract Task
-def extract_task(**context):
-    df = extract_data()
-    context['ti'].xcom_push(key='data', value=df.to_json())
-
-
-# 🟡 Transform Task
-def transform_task(**context):
-    data = context['ti'].xcom_pull(key='data')
-    df = pd.read_json(data)
-
-    df = transform_data(df)
-
-    context['ti'].xcom_push(key='data', value=df.to_json())
-
-
-# 🔵 Load Task
-def load_task(**context):
-    data = context['ti'].xcom_pull(key='data')
-    df = pd.read_json(data)
-
-    load_data(df)
-
-
 # ⚙️ Default arguments
 default_args = {
     'owner': 'sunakshi',
     'start_date': datetime(2024, 1, 1),
-    'retries': 3,
-    'retry_delay': timedelta(minutes=2),
+    'retries': 2,
+    'retry_delay': timedelta(minutes=1),
     'on_failure_callback': on_failure_callback
 }
 
 
 # 🚀 DAG Definition
 with DAG(
-    dag_id='api_etl_pipeline_v3',   # ✅ NEW DAG NAME
+    dag_id='api_etl_pipeline_v3',
     default_args=default_args,
     schedule_interval='@daily',
     catchup=False
 ) as dag:
 
+    # 🟢 Extract Task (writes extracted.csv)
     t1 = PythonOperator(
         task_id='extract',
-        python_callable=extract_task
+        python_callable=extract_data
     )
 
+    # 🟡 Transform Task (reads extracted.csv → writes transformed.csv)
     t2 = PythonOperator(
         task_id='transform',
-        python_callable=transform_task
+        python_callable=transform_data
     )
 
+    # 🔵 Load Task (reads transformed.csv → loads to DB)
     t3 = PythonOperator(
         task_id='load',
-        python_callable=load_task
+        python_callable=load_data
     )
 
-    # 🔗 Pipeline order
+    # 🔗 Pipeline flow
     t1 >> t2 >> t3

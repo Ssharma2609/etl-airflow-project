@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+
+# Data (generated files)
+data/raw/
+data/processed/
+
+# Environment files
+.env
+
+# VS Code settings
+.vscode/
