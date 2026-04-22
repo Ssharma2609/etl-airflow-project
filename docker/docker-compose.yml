@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: etl_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -45,11 +45,14 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/etl_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__WEBSERVER__SECRET_KEY: "mysecretkey"
+      PYTHONPATH: /opt/airflow
     ports:
       - "8080:8080"
     volumes:
-      - ./dags:/opt/airflow/dags
-      - ./data:/opt/airflow/data
+      - ../dags:/opt/airflow/dags
+      - ../etl:/opt/airflow/etl
+      - ../config:/opt/airflow/config
+      - ../data:/opt/airflow/data
     command: >
       bash -c "airflow db upgrade &&
               airflow webserver"
@@ -64,10 +67,12 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/etl_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__WEBSERVER__SECRET_KEY: "mysecretkey"
+      PYTHONPATH: /opt/airflow
     command: scheduler
     volumes:
-      - ./dags:/opt/airflow/dags
-      - ./data:/opt/airflow/data
-
+      - ../dags:/opt/airflow/dags
+      - ../etl:/opt/airflow/etl
+      - ../config:/opt/airflow/config
+      - ../data:/opt/airflow/data
 volumes:
   postgres_data:

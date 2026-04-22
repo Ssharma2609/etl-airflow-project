@@ -1,10 +1,15 @@
 import psycopg2
 import pandas as pd
 import os
+import logging
+
 from config.config import TRANSFORMED_DATA_PATH
+
+logging.basicConfig(level=logging.INFO)
+
 def load_data():
     try:
-        print("===== LOAD START =====")
+        logging.info("🚀 LOAD STARTED")
 
         path = TRANSFORMED_DATA_PATH
 
@@ -14,7 +19,7 @@ def load_data():
 
         # ✅ Read CSV
         df = pd.read_csv(path)
-        print("CSV Loaded:", df.shape)
+        logging.info(f"CSV Loaded: {df.shape}")
 
         # ✅ Connect to PostgreSQL
         conn = psycopg2.connect(
@@ -30,26 +35,32 @@ def load_data():
         # ✅ Create table if not exists
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS api_users (
-                id INT,
+                id INT PRIMARY KEY,
                 name TEXT,
                 email TEXT
             );
         """)
 
-        # ✅ Insert data row by row
+        # ✅ Insert data (IDEMPOTENT - no duplicates)
         for _, row in df.iterrows():
             cursor.execute(
-                "INSERT INTO api_users (id, name, email) VALUES (%s, %s, %s)",
+                """
+                INSERT INTO api_users (id, name, email)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """,
                 (int(row['id']), row['name'], row['email'])
             )
 
-        # ✅ Commit and close
+        # ✅ Commit changes
         conn.commit()
+
+        # ✅ Close connection
         cursor.close()
         conn.close()
 
-        print("✅ Data inserted successfully")
+        logging.info("✅ Data inserted successfully (no duplicates)")
 
     except Exception as e:
-        print("❌ ERROR:", str(e))
+        logging.error(f"❌ ERROR: {str(e)}")
         raise

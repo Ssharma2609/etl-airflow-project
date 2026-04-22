@@ -1,10 +1,10 @@
-# 🚀 Production-Grade ETL Pipeline using Airflow, Docker & PostgreSQL
+# Production-Grade ETL Pipeline using Airflow, Docker & PostgreSQL
 
 An end-to-end **data engineering pipeline** that extracts data from an API, transforms it, and loads it into PostgreSQL using **Apache Airflow** for orchestration — built with production-ready practices like modular design, configuration management, and containerization.
 
 ---
 
-# 🏗️ Architecture
+# Architecture
 
 ```text
 API Source (JSONPlaceholder)
@@ -39,7 +39,7 @@ DAG Tasks:
         ▼
 
 ┌───────────────┐
-│  Power BI     │ → Dashboard & Insights
+│  Power BI     │ → Dashboard & Insights (Live Data)
 └───────────────┘
 ```
 
@@ -68,6 +68,7 @@ DAG Tasks:
 * 🔁 Airflow DAG orchestration
 * 🐳 Fully Dockerized setup
 * 📊 Data modeling for analytics (analysis & graphanalysis tables)
+* 🔗 Live database integration with Power BI (no static files)
 
 ---
 
@@ -134,7 +135,7 @@ admin / admin
 | Parameter | Value     |
 | --------- | --------- |
 | Host      | localhost |
-| Port      | 5432      |
+| Port      | 5433      |
 | Database  | etl_db    |
 | User      | postgres  |
 | Password  | postgres  |
@@ -159,17 +160,24 @@ airflow dags trigger etl_dag
 
 ---
 
-# 🔌 Connect Power BI
+# 🔌 Connect Power BI (Live Data Integration)
 
-Use PostgreSQL connector:
+This project integrates Power BI directly with PostgreSQL for real-time dashboarding.
+
+Connection Details:
 
 * Host: `localhost`
-* Port: `5432`
+* Port: `5433`
 * Database: `etl_db`
 * Username: `postgres`
 * Password: `postgres`
 
-👉 Use these tables:
+Steps:
+
+1. Open Power BI Desktop
+2. Click **Get Data → PostgreSQL database**
+3. Enter the above connection details
+4. Select tables:
 
 ```text
 api_users
@@ -177,7 +185,27 @@ analysis
 graphanalysis
 ```
 
-to build dashboards.
+5. Click **Load**
+
+---
+
+### 🔄 Data Refresh
+
+After running the Airflow pipeline:
+
+```text
+Power BI → Home → Refresh
+```
+
+👉 Dashboards update automatically based on latest database state
+
+---
+
+### ⚠️ Note
+
+* PostgreSQL runs inside Docker
+* Port `5433` is exposed for local access
+* Power BI connects using this exposed port
 
 ---
 
@@ -207,6 +235,7 @@ to build dashboards.
 * Incremental loading strategy
 * Data modeling for analytics
 * Docker-based deployment
+* Real-time data visualization using Power BI
 
 ---
 
@@ -219,7 +248,7 @@ to build dashboards.
 | Incremental loading  | "Prevents duplicates using controlled insert logic"                   |
 | Docker setup         | "Fully containerized environment for reproducibility"                 |
 | Data modeling        | "Created analysis & graph tables for BI consumption"                  |
-| Visualization        | "Integrated PostgreSQL with Power BI for dashboarding"                |
+| Visualization        | "Integrated PostgreSQL with Power BI for real-time dashboarding"      |
 
 ---
 
@@ -240,4 +269,4 @@ to build dashboards.
 
 # ⭐ Conclusion
 
-This project demonstrates **real-world data engineering practices**, including orchestration, modular design, data modeling, and visualization — making it suitable for production-level workflows and interviews.
+This project demonstrates **real-world data engineering practices**, including orchestration, modular design, data modeling, and real-time visualization — making it suitable for production-level workflows and interviews.
