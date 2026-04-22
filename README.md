@@ -1,6 +1,6 @@
-# 🚀 Airflow-Based ETL Pipeline for Production-Grade Data Engineering
+# 🚀 Production-Grade ETL Pipeline using Airflow, Docker & PostgreSQL
 
-A production-style ETL pipeline demonstrating **Python, Apache Airflow, Docker, and PostgreSQL** using real-time API data.
+An end-to-end **data engineering pipeline** that extracts data from an API, transforms it, and loads it into PostgreSQL using **Apache Airflow** for orchestration — built with production-ready practices like modular design, configuration management, and containerization.
 
 ---
 
@@ -19,8 +19,8 @@ API Source (JSONPlaceholder)
         ▼
 
 DAG Tasks:
-1. extract  → API data fetch
-2. transform → data cleaning + validation
+1. extract   → API data ingestion (raw layer)
+2. transform → cleaning + validation (processed layer)
 3. load      → PostgreSQL insert (incremental)
 
         │
@@ -29,16 +29,17 @@ DAG Tasks:
 ┌─────────────────────────────────────┐
 │     PostgreSQL (etl_db)             │
 │-------------------------------------│
-│ api_users   → Final processed data  │
-│ airflow_*   → Metadata tables       │
+│ api_users        → Core dataset     │
+│ analysis         → Aggregated data  │
+│ graphanalysis    → Visualization    │
+│ airflow_*        → Metadata tables  │
 └─────────────────────────────────────┘
 
         │
         ▼
 
-(Optional Future)
 ┌───────────────┐
-│  Power BI     │ → Dashboards
+│  Power BI     │ → Dashboard & Insights
 └───────────────┘
 ```
 
@@ -46,24 +47,27 @@ DAG Tasks:
 
 # ⚙️ Tech Stack
 
-| Component        | Technology         |
-| ---------------- | ------------------ |
-| Orchestration    | Apache Airflow 2.6 |
-| Processing       | Python + Pandas    |
-| Storage          | PostgreSQL         |
-| Containerization | Docker             |
-| API Source       | JSONPlaceholder    |
+| Component        | Technology              |
+| ---------------- | ----------------------- |
+| Orchestration    | Apache Airflow 2.x      |
+| Processing       | Python + Pandas         |
+| Storage          | PostgreSQL              |
+| Visualization    | Power BI                |
+| Containerization | Docker & Docker Compose |
+| Configuration    | Python Config Module    |
+| API Source       | JSONPlaceholder         |
 
 ---
 
 # 📌 Key Features
 
-* 🔄 API Data Ingestion
-* 🧹 Data Cleaning & Validation
-* 🚫 Incremental Loading (No duplicates)
-* 🔁 Retry & Failure Handling
-* 📊 Airflow DAG Orchestration
-* 🐳 Fully Dockerized Setup
+* 🔄 API-based data ingestion
+* 🧹 Data cleaning & validation
+* 🚫 Incremental loading (duplicate-safe inserts)
+* ⚙️ Config-driven pipeline (no hardcoded paths)
+* 🔁 Airflow DAG orchestration
+* 🐳 Fully Dockerized setup
+* 📊 Data modeling for analytics (analysis & graphanalysis tables)
 
 ---
 
@@ -71,17 +75,29 @@ DAG Tasks:
 
 ```text
 etl-pipeline-project/
-├── dags/
-│   ├── etl_dag.py
+│
+├── dags/                # Airflow DAG definitions
+│   └── etl_dag.py
+│
+├── etl/                 # ETL logic (modular)
 │   ├── extract.py
 │   ├── transform.py
-│   ├── load.py
-│   └── __init__.py
+│   └── load.py
 │
-├── data/
-├── logs/
-├── docker-compose.yml
-├── requirements.txt
+├── config/              # Configuration
+│   └── config.py
+│
+├── docker/              # Docker setup
+│   ├── docker-compose.yml
+│   └── Dockerfile
+│
+├── data/                # Data layers (ignored in git)
+│   ├── raw/
+│   └── processed/
+│
+├── sample_data/         # Sample datasets
+├── logs/                # Logs (ignored)
+├── .gitignore
 └── README.md
 ```
 
@@ -92,18 +108,20 @@ etl-pipeline-project/
 ## 1️⃣ Start the system
 
 ```bash
-docker-compose up --build
+docker-compose up -d
 ```
 
 ---
 
-## 2️⃣ Open Airflow UI
+## 🔗 Access Services
+
+### 🔹 Airflow UI
 
 ```text
 http://localhost:8080
 ```
 
-Login:
+**Login:**
 
 ```text
 admin / admin
@@ -111,81 +129,115 @@ admin / admin
 
 ---
 
-## 3️⃣ Run the pipeline
+### 🔹 PostgreSQL
 
-### Option A — UI
+| Parameter | Value     |
+| --------- | --------- |
+| Host      | localhost |
+| Port      | 5432      |
+| Database  | etl_db    |
+| User      | postgres  |
+| Password  | postgres  |
 
-* Enable DAG: `api_etl_pipeline_v3`
+---
+
+# ▶️ Run the Pipeline
+
+### Option A — Airflow UI
+
+* Enable DAG: `etl_dag`
 * Click ▶ Trigger DAG
+
+---
 
 ### Option B — CLI
 
 ```bash
-docker exec -it airflow-webserver \
-airflow dags trigger api_etl_pipeline_v3
+docker exec -it airflow-scheduler \
+airflow dags trigger etl_dag
 ```
 
 ---
 
-# 📊 Output
+# 🔌 Connect Power BI
 
-Data is stored in:
+Use PostgreSQL connector:
+
+* Host: `localhost`
+* Port: `5432`
+* Database: `etl_db`
+* Username: `postgres`
+* Password: `postgres`
+
+👉 Use these tables:
 
 ```text
 api_users
+analysis
+graphanalysis
 ```
 
-Example:
+to build dashboards.
 
-| id | name          | username | email                                         |
-| -- | ------------- | -------- | --------------------------------------------- |
-| 1  | Leanne Graham | Bret     | [sincere@april.biz](mailto:sincere@april.biz) |
+---
+
+# 📊 Output Tables
+
+| Table Name    | Purpose                  |
+| ------------- | ------------------------ |
+| api_users     | Raw processed user data  |
+| analysis      | Aggregated insights      |
+| graphanalysis | Visualization-ready data |
 
 ---
 
 # 🔁 Incremental Loading Logic
 
 * First run → inserts all records
-* Next runs → inserts only new records
-* Prevents duplicate data
-
----
-
-# 📸 Airflow DAG View
-
-*Add your screenshot here*
-
-```text
-Screenshots/airflow_graph.png
-```
+* Next runs → inserts only new data
+* Prevents duplicate entries
 
 ---
 
 # 🧠 Key Learnings
 
-* Airflow DAG orchestration
-* XCom communication between tasks
-* Incremental ETL design
-* Modular pipeline structure
+* Modular ETL pipeline design
+* Airflow orchestration
+* Config-driven development
+* Incremental loading strategy
+* Data modeling for analytics
 * Docker-based deployment
+
+---
+
+# 🎯 Interview Talking Points
+
+| What you built       | How to explain it                                                     |
+| -------------------- | --------------------------------------------------------------------- |
+| Layered architecture | "Raw → Processed → Analytics layers similar to modern data pipelines" |
+| Airflow DAG          | "Task-based orchestration with dependencies and retry handling"       |
+| Incremental loading  | "Prevents duplicates using controlled insert logic"                   |
+| Docker setup         | "Fully containerized environment for reproducibility"                 |
+| Data modeling        | "Created analysis & graph tables for BI consumption"                  |
+| Visualization        | "Integrated PostgreSQL with Power BI for dashboarding"                |
 
 ---
 
 # 💼 Resume Description
 
-> Built a production-grade ETL pipeline using Apache Airflow, Docker, and PostgreSQL with API ingestion, modular design, and incremental data loading.
+> Built a production-grade ETL pipeline using Apache Airflow, Docker, PostgreSQL, and Power BI with modular architecture, incremental loading, and analytics-ready data modeling.
 
 ---
 
 # 🚀 Future Improvements
 
-* Power BI dashboard integration
-* CI/CD pipeline (Azure DevOps / GitHub Actions)
-* Streaming pipeline (Kafka)
-* Data warehouse integration
+* 🔔 Alerting & monitoring
+* ⚡ Bulk insert optimization
+* 🔄 CI/CD integration
+* 📡 Streaming pipeline (Kafka/Spark)
 
 ---
 
 # ⭐ Conclusion
 
-This project demonstrates **real-world data engineering practices**, including orchestration, scalability, and clean architecture.
+This project demonstrates **real-world data engineering practices**, including orchestration, modular design, data modeling, and visualization — making it suitable for production-level workflows and interviews.
